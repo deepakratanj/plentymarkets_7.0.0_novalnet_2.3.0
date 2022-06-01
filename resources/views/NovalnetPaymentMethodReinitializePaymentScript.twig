@@ -1,0 +1,81 @@
+<input type="hidden" name="nn_mop_id" id="nn_mop_id" value="{{paymentMethodIds}}">
+<input type="hidden" name="nn_paymentmethod_key" id="nn_paymentmethod_key" value="{{nnPaymentMethodKey}}">
+<input type="hidden" name="nn_paymentmethod_id" id="nn_paymentmethod_id" value="{{nnPaymentMethodId}}">
+
+
+<script type="text/javascript">
+
+  jQuery(function () {
+  
+    var nnPaymentMethodId = jQuery('#nn_paymentmethod_id').val();
+    var nnPaymentMethodKey = jQuery('#nn_paymentmethod_key').val();
+            
+    if(nnPaymentMethodKey == 'NOVALNET_APPLEPAY') {
+       var iosDevicce = iOS();
+       var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+       if(iosDevicce && isSafari) {
+        jQuery('li[data-id="'+nnPaymentMethodId+'"]').show();
+       } else {
+        jQuery('li[data-id="'+nnPaymentMethodId+'"]').hide();
+       }
+    }
+      
+    jQuery("[id^='nnReinitPaymentMethod-']").show();
+    
+    jQuery("[id^='-payment-process']").click(function () {
+      jQuery("[id^='nnReinitPaymentMethod-']").hide();
+    });
+    
+    jQuery("#direct-payment-process").click(function () {
+      jQuery.get("/payment/novalnet/changePaymentMethod/", function(data)
+      {
+        window.location = data;
+      });
+    });
+    
+    jQuery('#redirect-payment-process').click(function() {
+        window.location.href = jQuery('#nn_redirect_url').val();
+      });
+  
+      jQuery('#form-payment-process').click(function() {
+          jQuery("[id^='nnReinitPaymentMethod-']").hide();
+          jQuery('#novalnetPaymentForm').show();
+          var nnPaymentMethodKey = jQuery('#paymentMethodKey').val();
+          if(nnPaymentMethodKey == 'NOVALNET_CC') {
+             NovalnetUtility.setCreditCardFormHeight();
+          }
+      });
+    
+  });
+ 
+  var paymentMethodIds = jQuery('#nn_mop_id').val();
+  document.addEventListener('historyPaymentMethodChanged', e => {
+    for(let property in e.detail.newOrder.order.properties){
+      if(e.detail.newOrder.order.properties[property].typeId === 3){
+       for(let paymentMethodId in paymentMethodIds) {
+       if (e.detail.newOrder.order.properties[property].value ==  paymentMethodIds[paymentMethodId]) {
+          document.getElementById("nnReinitPaymentMethod-" + e.detail.oldOrder.id).style.display = "block";
+        } else {
+          document.getElementById("nnReinitPaymentMethod-" + e.detail.oldOrder.id).style.display = "none";
+        }
+       }
+      }
+    }
+  });
+  
+  function iOS() {
+    return [
+      'iPad Simulator',
+      'iPhone Simulator',
+      'iPod Simulator',
+      'iPad',
+      'iPhone',
+      'iPod'
+    ].includes(navigator.platform)
+    // iPad on iOS 13 detection
+    || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+}
+
+</script>
+
+
